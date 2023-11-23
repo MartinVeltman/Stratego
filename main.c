@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
 // set the board size
 #define BOARD_SIZE 4
@@ -46,12 +47,13 @@ void createBoard(Piece *board[BOARD_SIZE][BOARD_SIZE]) {
 }
 
 void display_board(Piece *board[BOARD_SIZE][BOARD_SIZE]) {
-    printf("Game Board:\n");
+    printf("  0 1 2 3 X\n"); // Displaying X-coordinates
     for (int i = 0; i < BOARD_SIZE; i++) {
+        printf("%d ", i); // Displaying Y-coordinates
         for (int j = 0; j < BOARD_SIZE; j++) {
             if (board[i][j] == NULL) {
                 printf("0 ");
-            } else if (board[i][j]->is_visible) { // board[i][j] is een pointer naar een stukje geheugen waar een Piece in zit. je kan met -> de daadwerkelijke value van het waar de pointer naar wijst ophalen.
+            } else if (board[i][j]->is_visible) {
                 printf("%d ", board[i][j]->value);
             } else {
                 printf("* ");
@@ -59,9 +61,33 @@ void display_board(Piece *board[BOARD_SIZE][BOARD_SIZE]) {
         }
         printf("\n");
     }
+    printf("Y\n");
 }
 
+void move_piece(Piece *board[BOARD_SIZE][BOARD_SIZE], int x, int y, char *direction) {
+    int target_x = x, target_y = y;
 
+    if (strcmp(direction, "boven") == 0 && y > 0) target_y--;
+    else if (strcmp(direction, "onder") == 0 && y < BOARD_SIZE - 1) target_y++;
+    else if (strcmp(direction, "links") == 0 && x > 0) target_x--;
+    else if (strcmp(direction, "rechts") == 0 && x < BOARD_SIZE - 1) target_x++;
+
+    if (board[target_y][target_x] == NULL) {
+        board[target_y][target_x] = board[y][x];
+        board[y][x] = NULL;
+    }
+    // Add more logic here for when a piece is already at the target location
+}
+
+void get_piece_to_move(int *x, int *y) {
+    printf("Selecteer een stuk (x y): ");
+    scanf("%d %d", x, y);
+}
+
+void get_direction(const char *direction) {
+    printf("Geef richting (boven, onder, links, rechts): ");
+    scanf("%s", direction);
+}
 
 
 int main() {
@@ -71,6 +97,25 @@ int main() {
     createBoard(board);
     display_board(board);
 
+    int x, y;
+    char direction[10];
+
+    while (1) {
+        display_board(board);
+
+        get_piece_to_move(&x, &y);
+        if (x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE || board[y][x] == NULL) {
+            printf("Ongeldige selectie, probeer opnieuw.\n");
+            continue;
+        }
+
+        get_direction(direction);
+
+        move_piece(board, x, y, direction);
+    }
 
     return 0;
 }
+
+
+
