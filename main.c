@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+//er is een 2 dimensionale array gemaakt waar of een null value staat of een pointer naar een stukje geheugen waar een Piece in zit. Dit is gedaan omdat je anders een 3 dimensionale array zou moeten maken om de value en is_visible van een Piece te kunnen veranderen. Dit zou veel meer geheugen gebruiken en het zou ook veel moeilijker zijn om door het bord heen te loopen.
 
 // set the board size
 #define BOARD_SIZE 4
@@ -127,6 +128,8 @@ void get_direction(const char *direction) {
 
 int main() {
     srand(time(NULL));  // zorg dat random niet steedd dezelfde getallen genereert
+
+
 
     Piece *board[BOARD_SIZE][BOARD_SIZE];
     createBoard(board);
