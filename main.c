@@ -2,62 +2,59 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-//er is een 2 dimensionale array gemaakt waar of een null value staat of een pointer naar een stukje geheugen waar een Piece in zit. Dit is gedaan omdat je anders een 3 dimensionale array zou moeten maken om de value en is_visible van een Piece te kunnen veranderen. Dit zou veel meer geheugen gebruiken en het zou ook veel moeilijker zijn om door het bord heen te loopen.
 
-// set the board size
-#define BOARD_SIZE 4
+#define BOARD_SIZE 4  // Definieer de grootte van het bord
 
-// Dit defineert een stukje geheugen dat je kan gebruiken om een stukje van het bord te representeren
 typedef struct {
     int value;
     int is_visible;
-} Piece;
+} Piece;  // Definieer de struct voor een stukje op het bord
 
-
-void initializeBoardCellsToNull(Piece *board[BOARD_SIZE][BOARD_SIZE]) {
-    for (int i = 0; i < BOARD_SIZE; i++) {
-        for (int j = 0; j < BOARD_SIZE; j++) {
-            board[i][j] = NULL; // Initialize all cells to NULL
-        }
+// Functie om het bord dynamisch te initialiseren
+Piece **createBoard() {
+    Piece **board = malloc(BOARD_SIZE * BOARD_SIZE * sizeof(Piece *)); // Maak een array van pointers naar stukjes piece, eigl 1 dimensionaal array
+    if (board == NULL) {
+        exit(1);
     }
-}
-//Deze functie zorgt ervoor dat alle cellen van het bord geinitialiseerd worden naar NULL. Dit is nodig omdat je anders niet kan checken of een cel leeg is of niet.
 
+    for (int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
+        board[i] = NULL;
+    }
+    return board;
+}
+
+// Functie om een stukje te creëren
 Piece *create_piece(int value, int is_visible) {
-    Piece *new_piece = (Piece *) malloc(
-            sizeof(Piece)); //Je maakt een nieuw stukje geheugen aan dat groot genoeg is om een Piece te bevatten. Dit stukje geheugen wordt dan toegewezen aan de pointer new_piece.
-    new_piece->value = value; //Je stelt de value van het stukje geheugen in op de waarde die je meegeeft aan de functie.
-    new_piece->is_visible = is_visible; //Je stelt de is_visible van het stukje geheugen in op de waarde die je meegeeft aan de functie.
-    return new_piece; //Je geeft de pointer terug zodat je het stukje geheugen kan gebruiken.
+    Piece *new_piece = (Piece *) malloc(sizeof(Piece));
+    if (new_piece == NULL) {
+        exit(1);  // Foutafhandeling als malloc faalt
+    }
+    new_piece->value = value;
+    new_piece->is_visible = is_visible;
+    return new_piece;
 }
 
-int random() {
-    // Generate a random number between 1 and 10
-    return rand() % 10 + 1;
-
+int random_num() {
+    return rand() % 10 + 1;  // Genereer een willekeurig getal tussen 1 en 10
 }
 
-void createBoard(Piece *board[BOARD_SIZE][BOARD_SIZE]) {
-    initializeBoardCellsToNull(board);
-
-    board[3][1] = create_piece(random(),
-                               1); // je plaatst een pointer naar een stukje geheugen op het bord. Dit stukje geheugen bevat een Piece met een value en een is_visible. zo set je dus niet een heel opject op het bord maar alleen een pointer naar een stukje geheugen waar een Piece in zit. zo blijft je array 2d en kan je makkelijk door het bord heen loopen en gebruikt het minder geheugen.
-    board[3][2] = create_piece(random(), 1);
-
-
-    board[0][1] = create_piece(random(), 0);
-    board[0][2] = create_piece(random(), 0);
+void fillBoard(Piece **board) {
+    board[3 * BOARD_SIZE + 1] = create_piece(random_num(), 1);
+    board[3 * BOARD_SIZE + 2] = create_piece(random_num(), 1);
+    board[0 * BOARD_SIZE + 1] = create_piece(random_num(), 0);
+    board[0 * BOARD_SIZE + 2] = create_piece(random_num(), 0);
 }
 
-void display_board(Piece *board[BOARD_SIZE][BOARD_SIZE]) {
-    printf("  0 1 2 3 X\n"); // Displaying X-coordinates
-    for (int i = 0; i < BOARD_SIZE; i++) {
-        printf("%d ", i); // Displaying Y-coordinates
-        for (int j = 0; j < BOARD_SIZE; j++) {
-            if (board[i][j] == NULL) {
+void display_board(Piece **board) {
+    printf("  0 1 2 3 X\n");
+    for (int i = 0; i < BOARD_SIZE; i++) { // loop door de y-coördinaten
+        printf("%d ", i);  // Toon Y-coördinaten
+        for (int j = 0; j < BOARD_SIZE; j++) { //loop door ehle bord en kijken of er een stukje is of niet
+            Piece *current_piece = board[i * BOARD_SIZE + j]; //krijg het stukje op de huidige locatie
+            if (current_piece == NULL) {
                 printf("0 ");
-            } else if (board[i][j]->is_visible) {
-                printf("%d ", board[i][j]->value);
+            } else if (current_piece->is_visible) {
+                printf("%d ", current_piece->value);
             } else {
                 printf("* ");
             }
@@ -65,6 +62,15 @@ void display_board(Piece *board[BOARD_SIZE][BOARD_SIZE]) {
         printf("\n");
     }
     printf("Y\n");
+}
+
+// De move_piece, get_piece_to_move, en get_direction functies blijven onveranderd
+
+void freeBoard(Piece **board) {
+    for (int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
+        free(board[i]);  // Maak elk stukje vrij
+    }
+    free(board);  // Maak het bord vrij
 }
 
 void move_piece(Piece *board[BOARD_SIZE][BOARD_SIZE], int x, int y, char *direction) {
@@ -84,17 +90,17 @@ void move_piece(Piece *board[BOARD_SIZE][BOARD_SIZE], int x, int y, char *direct
         return;
     }
 
-    // Check if target cell is occupied, if so do iets anders beweeg het stuk er gewoon heen
     if (board[target_y][target_x] != NULL) {
-        // Collision with opponent piece
         if (board[target_y][target_x]->is_visible ==
-            0) { //kijkt of het stuk waar je heen wilt gaan niet bezet is door een eigen stuk
-            if (board[y][x]->value > board[target_y][target_x]->value) { // je iegen stuk is waarde is groter dan het stuk waar je heen wilt gaan
+            0) {
+            if (board[y][x]->value >
+                board[target_y][target_x]->value) { // je iegen stuk is waarde is groter dan het stuk waar je heen wilt gaan
                 free(board[target_y][target_x]); // Remove opponent piece
                 board[target_y][target_x] = board[y][x]; // Move your piece
                 printf("Je hebt een stuk van de tegenstander verslagen!\n");
                 board[y][x] = NULL;
-            } else if (board[y][x]->value < board[target_y][target_x]->value) { // je iegen stuk is waarde is kleiner dan het stuk waar je heen wilt gaan
+            } else if (board[y][x]->value <
+                       board[target_y][target_x]->value) { // je iegen stuk is waarde is kleiner dan het stuk waar je heen wilt gaan
                 printf("Verslagen, tegenstander is sterker. met een waarde van %d\n", board[target_y][target_x]->value);
                 free(board[y][x]); // Remove your piece
                 board[y][x] = NULL;
@@ -125,35 +131,29 @@ void get_direction(const char *direction) {
     scanf("%s", direction);
 }
 
-
 int main() {
-    srand(time(NULL));  // zorg dat random niet steedd dezelfde getallen genereert
+    srand(time(NULL));  // Zorg dat random niet steeds dezelfde getallen genereert
 
-
-
-    Piece *board[BOARD_SIZE][BOARD_SIZE];
-    createBoard(board);
-    display_board(board);
+    Piece **board = createBoard();
+    fillBoard(board);
 
     int x, y;
     char direction[10];
 
     while (1) {
         display_board(board);
-
         get_piece_to_move(&x, &y);
-        if (x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE || board[y][x] == NULL) {
+        if (x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE || board[y * BOARD_SIZE + x] == NULL) {
             printf("Ongeldige selectie, probeer opnieuw.\n");
             continue;
         }
-
         get_direction(direction);
-
         move_piece(board, x, y, direction);
     }
 
+    freeBoard(board);
+
     return 0;
 }
-
 
 
